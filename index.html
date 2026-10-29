@@ -17,7 +17,7 @@ body:before{width:260px;height:260px;top:10%;left:-140px;background:#ff7d4b12}bo
 .shell{width:min(100%,1120px);position:relative;z-index:1}
 .header{display:flex;align-items:center;justify-content:space-between;margin:0 4px 20px;padding:0 6px}.brand{font-size:15px}.brandmark{width:38px;height:38px;border-radius:13px}.tag{padding:10px 14px}
 .stage{display:grid;grid-template-columns:minmax(190px,1fr) minmax(360px,440px) minmax(190px,1fr);align-items:center;gap:24px}
-.side{display:flex;flex-direction:column;gap:14px}.side-card{border:1px solid #ffffff18;border-radius:22px;padding:20px;background:linear-gradient(145deg,#ffffff0c,#ffffff04);box-shadow:0 20px 55px #0002}.eyebrow{font-size:10px;letter-spacing:2px;font-weight:900;color:#b9a7ff;text-transform:uppercase}.side-title{font-size:19px;font-weight:900;letter-spacing:-.5px;margin:10px 0 8px}.side-copy{font-size:12px;line-height:1.7;color:#b2b4d0}.statline{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #ffffff10;font-size:12px;color:#b2b4d0}.statline:last-child{border:0}.statline strong{color:#fff;font-size:14px}.tip{display:flex;gap:10px;align-items:flex-start;margin-top:14px}.tip-icon{width:32px;height:32px;flex:0 0 32px;display:grid;place-items:center;background:#ffffff0c;border-radius:10px}.tip strong{display:block;font-size:12px;margin-bottom:4px}.tip span{font-size:11px;color:#a8abc9;line-height:1.5}
+.side{display:flex;flex-direction:column;gap:16px}.side-card{position:relative;overflow:hidden;border:1px solid #ffffff1c;border-radius:24px;padding:22px;background:linear-gradient(145deg,#ffffff10,#ffffff04);box-shadow:0 24px 60px #0002;backdrop-filter:blur(14px)}.side-card:before{content:"";position:absolute;width:110px;height:110px;right:-56px;top:-56px;border-radius:50%;background:#b9a7ff0b;pointer-events:none}.eyebrow{font-size:10px;letter-spacing:2px;font-weight:900;color:#b9a7ff;text-transform:uppercase}.side-title{font-size:22px;font-weight:900;letter-spacing:-.7px;line-height:1.1;margin:12px 0 10px}.side-copy{font-size:12px;line-height:1.8;color:#b2b4d0}.statline{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #ffffff10;font-size:12px;color:#b2b4d0}.statline:last-child{border:0}.statline strong{color:#fff;font-size:14px}.tip{display:flex;gap:11px;align-items:flex-start;margin-top:17px}.tip-icon{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;background:#ffffff0c;border:1px solid #ffffff0c;border-radius:12px}.tip strong{display:block;font-size:12px;margin:2px 0 5px}.tip span{font-size:11px;color:#a8abc9;line-height:1.65}
 .brand{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:950;letter-spacing:2px}.brandmark{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:linear-gradient(135deg,#ffb64e,#ff6e55);box-shadow:0 5px 18px #ff784533;font-size:17px}
 .tag{font-size:10px;font-weight:850;letter-spacing:1.3px;color:#d4c6ff;background:#a18aff16;border:1px solid #b8a4ff35;border-radius:999px;padding:8px 11px}
 .frame{position:relative;overflow:hidden;border-radius:30px;border:1px solid #ffffff2a;background:#15152b;box-shadow:0 30px 90px #0009,0 0 0 5px #ffffff05,0 0 55px #a18aff0b;aspect-ratio:9/16;height:min(76svh,760px);width:auto;margin:auto}
@@ -98,21 +98,31 @@ class Rush extends Phaser.Scene{
  clearUi(){this.ui.removeAll(true)}
  home(){
   this.mode="home";this.hud.setVisible(false);this.clearUi();
-  this.ui.add(this.txt(195,130,"YOUR DAILY DOSE",11,"#c5b5ff","900"));this.ui.add(this.txt(195,163,"OF FRUIT.",34,"#ffffff","950"));
-  this.ui.add(this.txt(195,203,"PURE JUICY CHAOS",12,"#ffbd7a","900"));
-  const fruitRow=this.add.container(195,285);const emojis=["🍉","🍊","🍓","🍍","🥝"];emojis.forEach((e,i)=>{const x=(i-2)*58;const halo=this.add.circle(x,0,25,[0xff6c83,0xffad55,0xff8aa7,0xffcc63,0x9de477][i],.13);const t=this.txt(x,0,e,39);fruitRow.add([halo,t]);this.tweens.add({targets:[halo,t],y:"-=7",duration:700+i*100,yoyo:true,repeat:-1,ease:"Sine.inOut",delay:i*90})});this.ui.add(fruitRow);
-  const panel=this.add.graphics();panel.fillStyle(0xffffff,.055);panel.fillRoundedRect(34,350,322,68,18);panel.lineStyle(1,0xffffff,.1);panel.strokeRoundedRect(34,350,322,68,18);this.ui.add(panel);
-  this.ui.add(this.txt(195,370,"PERSONAL BEST",10,"#aaa6ce","900"));this.ui.add(this.txt(195,394,String(this.best).padStart(3,"0"),22,"#ffe3ad","900"));
-  this.ui.add(this.makeButton(195,480,270,58,"▶   START SLICING",()=>this.start()));
-  this.ui.add(this.makeButton(195,550,270,46,"HOW TO PLAY",()=>this.how(),true));
-  this.ui.add(this.txt(195,619,"60 SECONDS  ·  3 LIVES  ·  BIG COMBOS",10,"#8f8bb4","800"));
+  // Hero panel: deliberate hierarchy, clear call to action, compact game promise.
+  const hero=this.add.graphics();hero.fillStyle(0x090f25,.28);hero.fillRoundedRect(22,74,346,555,26);hero.lineStyle(1,0xffffff,.09);hero.strokeRoundedRect(22,74,346,555,26);this.ui.add(hero);
+  const badge=this.add.graphics();badge.fillStyle(0x8fe0b7,.12);badge.fillRoundedRect(119,91,152,27,13);badge.lineStyle(1,0x9dffcc,.25);badge.strokeRoundedRect(119,91,152,27,13);this.ui.add(badge);
+  this.ui.add(this.txt(195,104,"✦  FOREST ARCADE EDITION",9,"#b9ffd8","900"));
+  this.ui.add(this.txt(195,151,"READY TO",13,"#c5b5ff","900"));
+  this.ui.add(this.txt(195,190,"SLICE?",46,"#ffffff","950"));
+  this.ui.add(this.txt(195,222,"Fresh fruit. Fast reflexes. Big combos.",11,"#c2c7e4","600"));
+  // Fruit showcase with subtle colored halos.
+  const fruitRow=this.add.container(195,294);const emojis=["🍉","🍊","🍓","🍍","🥝"];emojis.forEach((e,i)=>{const x=(i-2)*58;const halo=this.add.circle(x,0,25,[0xff6c83,0xffad55,0xff8aa7,0xffcc63,0x9de477][i],.17);const rim=this.add.circle(x,0,29,0xffffff,0).setStrokeStyle(1,0xffffff,.12);const t=this.txt(x,0,e,38);fruitRow.add([halo,rim,t]);this.tweens.add({targets:[halo,t],y:"-=6",duration:750+i*100,yoyo:true,repeat:-1,ease:"Sine.inOut",delay:i*80})});this.ui.add(fruitRow);
+  const panel=this.add.graphics();panel.fillStyle(0xffffff,.055);panel.fillRoundedRect(52,345,286,66,17);panel.lineStyle(1,0xffffff,.11);panel.strokeRoundedRect(52,345,286,66,17);this.ui.add(panel);
+  this.ui.add(this.txt(195,362,"PERSONAL BEST",9,"#aaa6ce","900"));this.ui.add(this.txt(195,389,String(this.best).padStart(4,"0"),24,"#ffe3ad","900"));
+  this.ui.add(this.makeButton(195,468,270,56,"▶   START SLICING",()=>this.start()));
+  this.ui.add(this.makeButton(195,536,270,44,"HOW TO PLAY",()=>this.how(),true));
+  this.ui.add(this.txt(195,594,"60 SEC   ·   3 LIVES   ·   COMBO MULTIPLIERS",9,"#a4a0c6","800"));
+  this.ui.add(this.txt(195,614,"SWIPE THROUGH FRUIT  •  AVOID BOMBS",8,"#737da4","700"));
  }
  how(){
-  this.clearUi();this.ui.add(this.txt(195,160,"THE RULES",28,"#fff","950"));
-  const rows=[["🍊","SLICE FRUIT","Every fruit adds points"],["⚡","CHAIN COMBOS","Slice quickly for bonus points"],["💣","DODGE BOMBS","A bomb costs one life"],["❤️","THREE LIVES","Keep slicing until time runs out"]];
-  rows.forEach((r,i)=>{const y=235+i*76,g=this.add.graphics();g.fillStyle(0xffffff,.055);g.fillRoundedRect(34,y-25,322,60,15);this.ui.add(g);this.ui.add(this.txt(64,y+2,r[0],24));this.ui.add(this.txt(100,y-7,r[1],12,"#ffcc91","900",0));this.ui.add(this.txt(100,y+13,r[2],11,"#b6b1d4","500",0))});
-  this.ui.add(this.makeButton(195,570,260,54,"GOT IT — LET'S PLAY",()=>this.start()));
-  this.ui.add(this.makeButton(195,630,260,40,"BACK",()=>this.home(),true));
+  this.clearUi();
+  const card=this.add.graphics();card.fillStyle(0x090f25,.35);card.fillRoundedRect(22,100,346,500,24);card.lineStyle(1,0xffffff,.1);card.strokeRoundedRect(22,100,346,500,24);this.ui.add(card);
+  this.ui.add(this.txt(195,143,"QUICK START",10,"#b9ffd8","900"));
+  this.ui.add(this.txt(195,178,"HOW TO PLAY",27,"#ffffff","950"));
+  const rows=[["🍊","SLICE FRUIT","Drag your mouse through fruit to score."],["⚡","CHAIN COMBOS","Slice quickly to multiply your points."],["💣","AVOID BOMBS","A bomb costs one of your three lives."],["❤️","BEAT THE CLOCK","Score as much as you can in 60 seconds."]];
+  rows.forEach((r,i)=>{const y=235+i*70,g=this.add.graphics();g.fillStyle(0xffffff,.055);g.fillRoundedRect(43,y-23,304,56,14);g.lineStyle(1,0xffffff,.06);g.strokeRoundedRect(43,y-23,304,56,14);this.ui.add(g);this.ui.add(this.txt(69,y+3,r[0],23));this.ui.add(this.txt(102,y-7,r[1],11,"#ffcc91","900",0));this.ui.add(this.txt(102,y+12,r[2],9,"#b6b1d4","500",0))});
+  this.ui.add(this.makeButton(195,548,260,50,"LET'S PLAY",()=>this.start()));
+  this.ui.add(this.makeButton(195,608,260,38,"BACK",()=>this.home(),true));
  }
  start(){
   this.clearUi();this.hud.setVisible(true);this.mode="playing";this.score=0;this.lives=3;this.seconds=60;this.combo=0;this.comboEnd=0;this.swiping=false;
