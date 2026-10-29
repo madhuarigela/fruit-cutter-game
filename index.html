@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#07111f">
+<meta name="description" content="Slice fruit, build combos and beat your best score in Fruit Cutter.">
+<title>Fruit Cutter — Arcade</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+<style>
+:root{color-scheme:dark;font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;min-height:100svh;background:radial-gradient(ellipse at 50% 0%,#17304a 0,#091625 48%,#050b14 100%);color:#f7fbff;display:flex;align-items:center;justify-content:center;padding:18px;overflow-x:hidden}
+.shell{width:min(100%,480px);position:relative}.top{display:flex;align-items:center;justify-content:space-between;margin:0 4px 12px}.brand{font-weight:900;letter-spacing:.08em;font-size:13px;color:#a9c4dc}.brand b{color:#fff}.pill{border:1px solid #ffffff1b;background:#ffffff0b;border-radius:999px;padding:8px 12px;font-size:12px;color:#c5d5e6}
+.frame{position:relative;border:1px solid #9cc9ff26;border-radius:28px;overflow:hidden;box-shadow:0 28px 90px #0008, inset 0 1px #ffffff12;background:#0b1a2a;aspect-ratio:9/16;max-height:calc(100svh - 110px);margin:auto}
+#game{width:100%;height:100%;touch-action:none}#game canvas{display:block;width:100%!important;height:100%!important;object-fit:contain}
+.footer{display:flex;justify-content:space-between;gap:12px;margin:12px 4px 0;color:#71879d;font-size:11px}.footer span:last-child{text-align:right}
+@media(min-width:650px){.frame{max-height:calc(100svh - 110px)}}@media(max-height:650px) and (orientation:landscape){body{padding:8px}.shell{width:auto;height:100svh;display:flex;align-items:center;gap:16px}.frame{height:calc(100svh - 20px);width:auto;aspect-ratio:9/16;max-height:none}.top,.footer{display:none}}
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="top"><div class="brand">✦ <b>FRUIT</b> CUTTER</div><div class="pill">ARCADE • FREE TO PLAY</div></header>
+  <div class="frame"><div id="game" aria-label="Fruit Cutter game"></div></div>
+  <footer class="footer"><span>Swipe through fruit. Avoid bombs.</span><span>Prototype 0.1 · Best score saved on this device</span></footer>
+</main>
+<script>
+(() => {
+  const W=390,H=690;
+  const fruitTypes=[
+    {emoji:"🍉",color:0xff5b70,points:10},{emoji:"🍊",color:0xffa83d,points:10},
+    {emoji:"🍋",color:0xffdf55,points:15},{emoji:"🍏",color:0x7ee081,points:10},
+    {emoji:"🍇",color:0xb58bff,points:15},{emoji:"🥝",color:0x9bd65a,points:15},
+    {emoji:"🍓",color:0xff7298,points:20},{emoji:"🍍",color:0xffc65c,points:20}
+  ];
+  class FruitCutter extends Phaser.Scene{
+    constructor(){super("game");this.mode="home";this.score=0;this.lives=3;this.timeLeft=60;this.best=Number(localStorage.getItem("fruitCutterBest")||0);this.objects=[];this.swipePoints=[];this.spawnTimer=0;this.combo=0;this.comboUntil=0}
+    create(){
+      this.bg=this.add.graphics();this.drawBackground();
+      this.add.text(W/2,38,"FRUIT  /  FRENZY",{fontFamily:"system-ui",fontSize:"12px",fontStyle:"900",color:"#8caac6",letterSpacing:3}).setOrigin(.5);
+      this.scoreText=this.add.text(22,65,"000",{fontFamily:"system-ui",fontSize:"34px",fontStyle:"900",color:"#ffffff"});this.add.text(24,102,"SCORE",{fontSize:"10px",fontStyle:"bold",color:"#86a0bb",letterSpacing:2});
+      this.timeText=this.add.text(W-22,70,"60",{fontSize:"27px",fontStyle:"900",color:"#e6f4ff"}).setOrigin(1,0);this.add.text(W-22,102,"SECONDS",{fontSize:"10px",fontStyle:"bold",color:"#86a0bb",letterSpacing:2}).setOrigin(1,0);
+      this.livesText=this.add.text(W/2,84,"♥ ♥ ♥",{fontSize:"16px",color:"#ff7896"}).setOrigin(.5);
+      this.line=this.add.graphics().setDepth(20);
+      this.overlay=this.add.container(0,0).setDepth(30);
+      this.input.on("pointerdown",p=>{if(this.mode!=="playing")return;this.swiping=true;this.lastPoint={x:p.x,y:p.y};this.swipePoints=[{x:p.x,y:p.y,t:this.time.now}]});
+      this.input.on("pointermove",p=>{if(!this.swiping||this.mode!=="playing")return;const prev=this.lastPoint;this.lastPoint={x:p.x,y:p.y};this.swipePoints.push({x:p.x,y:p.y,t:this.time.now});if(prev)this.cutAlong(prev.x,prev.y,p.x,p.y);});
+      this.input.on("pointerup",()=>{this.swiping=false});
+      this.input.on("gameout",()=>{this.swiping=false});
+      this.showHome();
+    }
+    drawBackground(){
+      this.bg.clear();this.bg.fillGradientStyle(0x102b45,0x102b45,0x071320,0x071320,1);this.bg.fillRect(0,0,W,H);
+      for(let i=0;i<55;i++){const x=(i*73+19)%W,y=(i*131+35)%H;this.bg.fillStyle(0x8ecbff,0.10+(i%3)*0.04);this.bg.fillCircle(x,y,i%4===0?2:1)}
+      this.bg.lineStyle(1,0x8cc7f0,0.05);for(let y=135;y<H;y+=45)this.bg.lineBetween(0,y,W,y);
+      this.bg.fillStyle(0x6ecb9b,0.08);this.bg.fillEllipse(W/2,H+30,410,130);
+    }
+    clearOverlay(){this.overlay.removeAll(true)}
+    text(x,y,s,size,color="#ffffff",weight="700",origin=.5){return this.add.text(x,y,s,{fontFamily:"system-ui",fontSize:size+"px",fontStyle:weight,color,align:"center",lineSpacing:5,wordWrap:{width:300}}).setOrigin(origin)}
+    button(x,y,w,h,label,callback,secondary=false){
+      const c=this.add.container(x,y);const g=this.add.graphics();g.fillStyle(secondary?0x132a40:0x8cf0bd,1);g.fillRoundedRect(-w/2,-h/2,w,h,16);g.lineStyle(1,secondary?0x42627e:0xc0ffe0,.8);g.strokeRoundedRect(-w/2,-h/2,w,h,16);
+      const t=this.text(0,0,label,secondary?14:16,secondary?"#d9eaff":"#06251c","900");c.add([g,t]);c.setSize(w,h);c.setInteractive(new Phaser.Geom.Rectangle(-w/2,-h/2,w,h),Phaser.Geom.Rectangle.Contains);c.on("pointerover",()=>c.setScale(1.025));c.on("pointerout",()=>c.setScale(1));c.on("pointerdown",()=>{this.tweens.add({targets:c,scale:.97,duration:70,yoyo:true});callback()});this.overlay.add(c);return c;
+    }
+    showHome(){
+      this.mode="home";this.clearOverlay();
+      this.overlay.add(this.text(W/2,175,"🍉",78));
+      this.overlay.add(this.text(W/2,246,"SLICE THE",24,"#d6eaff","900"));
+      this.overlay.add(this.text(W/2,281,"GOOD STUFF.",34,"#ffffff","900"));
+      this.overlay.add(this.text(W/2,327,"Swipe fast. Chase combos.\nWhatever you do, dodge the bombs.",14,"#9db6ce","500"));
+      const best=this.text(W/2,390,"PERSONAL BEST   "+String(this.best).padStart(3,"0"),12,"#9debc4","800");this.overlay.add(best);
+      this.button(W/2,462,250,58,"▶   PLAY NOW",()=>this.startGame());
+      this.button(W/2,532,250,48,"HOW TO PLAY",()=>this.showHow(),true);
+      this.overlay.add(this.text(W/2,603,"60 SECONDS  ·  3 LIVES  ·  BIG COMBOS",10,"#66839e","800"));
+    }
+    showHow(){
+      this.clearOverlay();this.overlay.add(this.text(W/2,180,"THE RULES",28,"#ffffff","900"));
+      this.overlay.add(this.text(W/2,260,"🍊  Slice fruit to score points\n\n✨  Slice several quickly for combos\n\n💣  Bombs cost you a life\n\n♥  Three strikes and it's game over",17,"#d5e6f7","600"));
+      this.button(W/2,450,240,54,"GOT IT — PLAY",()=>this.startGame());
+      this.button(W/2,516,240,44,"BACK",()=>this.showHome(),true);
+    }
+    startGame(){
+      this.clearOverlay();this.objects.forEach(o=>o.destroy());this.objects=[];this.score=0;this.lives=3;this.timeLeft=60;this.combo=0;this.mode="playing";this.spawnTimer=0;this.swiping=false;this.updateHud();
+      this.timerEvent=this.time.addEvent({delay:1000,loop:true,callback:()=>{if(this.mode!=="playing")return;this.timeLeft--;this.updateHud();if(this.timeLeft<=0)this.endGame("TIME UP");}});
+      this.spawnBurst();this.spawnEvent=this.time.addEvent({delay:880,loop:true,callback:()=>{if(this.mode==="playing")this.spawnBurst();}});
+    }
+    updateHud(){this.scoreText.setText(String(this.score).padStart(3,"0"));this.timeText.setText(String(this.timeLeft).padStart(2,"0"));this.timeText.setColor(this.timeLeft<=10?"#ff8c9c":"#e6f4ff");this.livesText.setText("♥ ".repeat(this.lives).trim()||"—");}
+    spawnBurst(){
+      const count=Phaser.Math.Between(3,5),center=Phaser.Math.Between(85,W-85);
+      for(let i=0;i<count;i++){
+        const isBomb=Math.random()<0.13;const f=isBomb?{emoji:"💣",color:0x252d3c,points:0}:Phaser.Utils.Array.GetRandom(fruitTypes);
+        const x=Phaser.Math.Clamp(center+Phaser.Math.Between(-105,105),35,W-35),y=H+45+Phaser.Math.Between(0,70);
+        const obj=this.add.container(x,y).setDepth(5);
+        const glow=this.add.circle(0,0,27,f.color,.15);const emoji=this.add.text(0,0,f.emoji,{fontFamily:"system-ui",fontSize:isBomb?"43px":"45px"}).setOrigin(.5);
+        obj.add([glow,emoji]);obj.setSize(54,54);obj.setData({bomb:isBomb,points:f.points,emoji:f.emoji,sliced:false,radius:25});
+        obj.vx=Phaser.Math.Between(-95,95);obj.vy=Phaser.Math.Between(-850,-680);obj.spin=Phaser.Math.Between(-3,3);
+        this.objects.push(obj);
+      }
+    }
+    cutAlong(x1,y1,x2,y2){
+      this.line.clear();this.line.lineStyle(5,0x9bffdc,.88);this.line.beginPath();this.line.moveTo(x1,y1);this.line.lineTo(x2,y2);this.line.strokePath();this.line.lineStyle(12,0x83ffd0,.12);this.line.beginPath();this.line.moveTo(x1,y1);this.line.lineTo(x2,y2);this.line.strokePath();
+      for(const o of [...this.objects]){if(!o.active||o.getData("sliced"))continue;const dx=x2-x1,dy=y2-y1,len=dx*dx+dy*dy||1;const t=Phaser.Math.Clamp(((o.x-x1)*dx+(o.y-y1)*dy)/len,0,1);const px=x1+t*dx,py=y1+t*dy;if(Phaser.Math.Distance.Between(o.x,o.y,px,py)<o.getData("radius")+12)this.slice(o);}
+    }
+    slice(o){
+      if(!o.active||o.getData("sliced"))return;o.setData("sliced",true);
+      const bomb=o.getData("bomb");
+      if(bomb){this.cameras.main.shake(180,.009);this.cameras.main.flash(100,255,65,80,.25);this.lives=Math.max(0,this.lives-1);this.updateHud();this.floatText(o.x,o.y,"BOMB!","#ff758d");if(this.lives===0)this.endGame("TOO MANY BOMBS");}
+      else{
+        const now=this.time.now;this.combo=now<this.comboUntil?this.combo+1:1;this.comboUntil=now+700;const multiplier=this.combo>=4?3:this.combo>=2?2:1;const pts=o.getData("points")*multiplier;this.score+=pts;this.updateHud();this.floatText(o.x,o.y,(this.combo>=2?"COMBO x"+multiplier+"  +":"+")+pts,multiplier>1?"#9dffcc":"#ffffff");
+        for(let i=0;i<7;i++){const p=this.add.circle(o.x,o.y,Phaser.Math.Between(2,5),fruitTypes.find(f=>f.emoji===o.getData("emoji"))?.color||0xffffff,.95).setDepth(15);this.tweens.add({targets:p,x:p.x+Phaser.Math.Between(-45,45),y:p.y+Phaser.Math.Between(-45,45),alpha:0,scale:.1,duration:320,onComplete:()=>p.destroy()});}
+      }
+      this.tweens.add({targets:o,scale:.2,alpha:0,angle:Phaser.Math.Between(-90,90),duration:130,onComplete:()=>o.destroy()});
+    }
+    floatText(x,y,s,color){const t=this.add.text(x,y,s,{fontFamily:"system-ui",fontSize:"17px",fontStyle:"900",color,stroke:"#061321",strokeThickness:4}).setOrigin(.5).setDepth(18);this.tweens.add({targets:t,y:y-45,alpha:0,duration:650,onComplete:()=>t.destroy()});}
+    endGame(reason){
+      if(this.mode!=="playing")return;this.mode="over";this.swiping=false;if(this.timerEvent)this.timerEvent.remove();if(this.spawnEvent)this.spawnEvent.remove();
+      if(this.score>this.best){this.best=this.score;localStorage.setItem("fruitCutterBest",String(this.best));}
+      this.clearOverlay();this.overlay.add(this.text(W/2,188,reason,15,"#9debc4","900"));this.overlay.add(this.text(W/2,239,"NICE SLICING.",29,"#ffffff","900"));
+      this.overlay.add(this.text(W/2,303,String(this.score).padStart(3,"0"),58,"#9dffcc","900"));this.overlay.add(this.text(W/2,343,"FINAL SCORE",11,"#8caac6","900"));
+      const g=this.add.graphics();g.fillStyle(0xffffff,.06);g.fillRoundedRect(55,375,280,60,14);this.overlay.add(g);
+      this.overlay.add(this.text(W/2,395,"BEST  "+String(this.best).padStart(3,"0"),16,"#ffffff","800"));this.overlay.add(this.text(W/2,418,"Keep going. Your next record is close.",11,"#9cb2c8","500"));
+      this.button(W/2,488,250,54,"↻   PLAY AGAIN",()=>this.startGame());
+      this.button(W/2,553,250,46,"HOME",()=>this.showHome(),true);
+      this.overlay.add(this.text(W/2,620,"MORE FEATURES COMING IN FUTURE UPDATES",9,"#5e7a94","800"));
+    }
+    update(time,delta){
+      if(this.mode==="playing"){
+        const dt=Math.min(delta/1000,.04);
+        for(const o of [...this.objects]){
+          if(!o.active)continue;o.vy+=760*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;o.rotation+=o.spin*dt;
+          if(o.y>H+90){this.objects=this.objects.filter(a=>a!==o);o.destroy();}
+        }
+        this.line.clear();
+        if(this.swiping&&this.swipePoints.length>1){const pts=this.swipePoints.filter(p=>time-p.t<120);this.swipePoints=pts; if(pts.length>1){this.line.lineStyle(4,0x9bffdc,.65);this.line.beginPath();this.line.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)this.line.lineTo(pts[i].x,pts[i].y);this.line.strokePath();}}
+      }
+    }
+  }
+  const config={type:Phaser.AUTO,parent:"game",width:W,height:H,backgroundColor:"#0b1a2a",scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},input:{activePointers:1},render:{antialias:true},scene:[FruitCutter]};
+  new Phaser.Game(config);
+})();
+</script>
+</body>
+</html>
