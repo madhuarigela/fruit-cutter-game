@@ -14,33 +14,23 @@
 body{min-height:100svh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at 50% -10%,#403064 0,#19192f 38%,#090d19 100%);overflow-x:hidden}
 body:before,body:after{content:"";position:fixed;border-radius:50%;filter:blur(2px);pointer-events:none;z-index:0}
 body:before{width:260px;height:260px;top:10%;left:-140px;background:#ff7d4b12}body:after{width:300px;height:300px;right:-180px;bottom:8%;background:#a58cff12}
-.shell{width:min(100%,1120px);position:relative;z-index:1}
-.header{display:flex;align-items:center;justify-content:space-between;margin:0 4px 20px;padding:0 6px}.brand{font-size:15px}.brandmark{width:38px;height:38px;border-radius:13px}.tag{padding:10px 14px}
-.stage{display:grid;grid-template-columns:minmax(190px,1fr) minmax(360px,440px) minmax(190px,1fr);align-items:center;gap:24px}
-.side{display:flex;flex-direction:column;gap:16px}.side-card{position:relative;overflow:hidden;border:1px solid #ffffff1c;border-radius:24px;padding:22px;background:linear-gradient(145deg,#ffffff10,#ffffff04);box-shadow:0 24px 60px #0002;backdrop-filter:blur(14px)}.side-card:before{content:"";position:absolute;width:110px;height:110px;right:-56px;top:-56px;border-radius:50%;background:#b9a7ff0b;pointer-events:none}.eyebrow{font-size:10px;letter-spacing:2px;font-weight:900;color:#b9a7ff;text-transform:uppercase}.side-title{font-size:22px;font-weight:900;letter-spacing:-.7px;line-height:1.1;margin:12px 0 10px}.side-copy{font-size:12px;line-height:1.8;color:#b2b4d0}.statline{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #ffffff10;font-size:12px;color:#b2b4d0}.statline:last-child{border:0}.statline strong{color:#fff;font-size:14px}.tip{display:flex;gap:11px;align-items:flex-start;margin-top:17px}.tip-icon{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;background:#ffffff0c;border:1px solid #ffffff0c;border-radius:12px}.tip strong{display:block;font-size:12px;margin:2px 0 5px}.tip span{font-size:11px;color:#a8abc9;line-height:1.65}
+.shell{width:min(100%,520px);position:relative;z-index:1}
+.header{display:flex;align-items:center;justify-content:space-between;margin:0 4px 12px;padding:0 6px}
 .brand{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:950;letter-spacing:2px}.brandmark{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:linear-gradient(135deg,#ffb64e,#ff6e55);box-shadow:0 5px 18px #ff784533;font-size:17px}
 .tag{font-size:10px;font-weight:850;letter-spacing:1.3px;color:#d4c6ff;background:#a18aff16;border:1px solid #b8a4ff35;border-radius:999px;padding:8px 11px}
+.stage{display:flex;justify-content:center;align-items:center}
 .frame{position:relative;overflow:hidden;border-radius:30px;border:1px solid #ffffff2a;background:#15152b;box-shadow:0 30px 90px #0009,0 0 0 5px #ffffff05,0 0 55px #a18aff0b;aspect-ratio:9/16;height:min(76svh,760px);width:auto;margin:auto}
 #game{width:100%;height:100%;touch-action:none}#game canvas{display:block;width:100%!important;height:100%!important;object-fit:contain}
 .foot{display:flex;justify-content:space-between;gap:12px;margin:12px 4px 0;color:#8987a8;font-size:10px}.foot span:last-child{text-align:right}
-@media(max-width:850px){body{padding:14px}.shell{width:min(100%,520px)}.stage{display:flex;justify-content:center}.side{display:none}.frame{height:min(74svh,760px)}}
-@media(max-width:460px){body{padding:10px}.header{margin-bottom:12px}.brand{font-size:12px}.tag{font-size:9px;padding:8px}.frame{height:min(76svh,720px);border-radius:25px}.foot{font-size:9px}}
-@media(max-height:650px) and (orientation:landscape){body{padding:6px}.shell{width:auto;height:100svh}.stage{display:block}.frame{height:calc(100svh - 78px);width:auto;aspect-ratio:9/16;max-height:none}.header,.foot,.side{display:none}}
+@media(max-width:600px){html,body{width:100%;height:100%;min-height:100%;overflow:hidden}body{display:block;padding:0;background:#101020}.shell{width:100%;height:100svh;max-width:none}.header,.foot{display:none}.stage{width:100%;height:100%;display:block}.frame{width:100%;height:100%;max-height:none;aspect-ratio:auto;border:0;border-radius:0;box-shadow:none}#game,#game canvas{width:100%!important;height:100%!important}}
+@media(max-height:650px) and (orientation:landscape) and (min-width:601px){body{padding:6px}.shell{width:auto;height:100svh}.frame{height:calc(100svh - 78px);width:auto;aspect-ratio:9/16;max-height:none}.header,.foot{display:none}}
 </style>
 </head>
 <body>
 <main class="shell">
 <header class="header"><div class="brand"><span class="brandmark">✦</span><span>FRUIT <span style="color:#ffad66">RUSH</span></span></div><span class="tag">ARCADE MODE</span></header>
 <div class="stage">
-<aside class="side">
- <section class="side-card"><div class="eyebrow">The mission</div><div class="side-title">Slice. Chain.<br>Conquer.</div><div class="side-copy">A fast, juicy arcade challenge. Build streaks, chase a new record, and keep your blade away from bombs.</div></section>
- <section class="side-card"><div class="eyebrow">Round setup</div><div class="statline"><span>Round length</span><strong>60 sec</strong></div><div class="statline"><span>Starting lives</span><strong>♥ ♥ ♥</strong></div><div class="statline"><span>Combo bonus</span><strong>×2 / ×3</strong></div></section>
-</aside>
-<div class="frame"><div id="game" aria-label="Fruit Rush game"></div></div>
-<aside class="side">
- <section class="side-card"><div class="eyebrow">Quick controls</div><div class="tip"><div class="tip-icon">🖱️</div><div><strong>Swipe to slice</strong><span>Hold the mouse and drag through fruit to score.</span></div></div><div class="tip"><div class="tip-icon">💣</div><div><strong>Keep clear of bombs</strong><span>Each hit costs one life. Three strikes end the round.</span></div></div><div class="tip"><div class="tip-icon">⚡</div><div><strong>Keep the streak alive</strong><span>Slice quickly to multiply your points.</span></div></div></section>
- <section class="side-card"><div class="eyebrow">Pro tip</div><div class="side-title">Aim for a clean combo.</div><div class="side-copy">Wait for a cluster, then sweep across several fruits in one smooth motion. Speed helps—but accuracy wins.</div></section>
-</aside>
+<div class="frame"><div id="game" aria-label="Fruit Rush Android game preview"></div></div>
 </div>
 <footer class="foot"><span>✦ Fruit Rush Arcade</span><span>Best score is saved on this device</span></footer>
 </main>
