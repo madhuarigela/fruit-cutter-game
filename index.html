@@ -51,9 +51,23 @@ class Rush extends Phaser.Scene{
  drawBg(){
   const g=this.add.graphics();g.fillGradientStyle(0x251b46,0x171b3d,0x101a30,0x101a30,1);g.fillRect(0,0,W,H);
   g.fillStyle(0xffa45b,.09);g.fillCircle(330,190,120);g.fillStyle(0x9b8aff,.08);g.fillCircle(35,420,140);
+  // Distant forest silhouettes create depth without hiding the fruit.
+  g.fillStyle(0x263956,.45);
+  for(let i=0;i<11;i++){const x=i*43-15,base=H-16,h=100+(i*37)%100;g.fillTriangle(x-38,base,x,base-h,x+38,base);g.fillTriangle(x-30,base-35,x,base-h-25,x+30,base-35)}
+  // Midground leafy trees, intentionally darker than the play field.
+  for(let i=0;i<8;i++){
+   const side=i%2===0, x=side?18+(i%3)*14:W-18-(i%3)*14, base=H-20-(i%3)*10, scale=.72+(i%3)*.13;
+   g.fillStyle(0x342e55,.72);g.fillRect(x-4*scale,base-76*scale,8*scale,80*scale);
+   g.fillStyle(i%2?0x315c58:0x3a665d,.54);
+   g.fillCircle(x,base-87*scale,25*scale);g.fillCircle(x-17*scale,base-73*scale,18*scale);g.fillCircle(x+18*scale,base-72*scale,19*scale);
+   g.fillStyle(0x83bd8c,.10);g.fillCircle(x-7*scale,base-94*scale,10*scale);
+  }
+  // Foreground grass line along the bottom edge.
+  g.fillStyle(0x23483f,.42);g.fillEllipse(W/2,H+16,440,82);
+  g.fillStyle(0x5b9b67,.25);
+  for(let i=0;i<34;i++){const x=i*12-5,y=H-3-(i%4)*3;g.fillTriangle(x-5,y,x,y-10-(i%3)*3,x+5,y)}
   for(let i=0;i<52;i++){g.fillStyle(i%3?0xffffff:0xffd9a1,.07+(i%4)*.025);g.fillCircle((i*71+19)%W,(i*137+25)%H,i%5===0?2:1)}
-  g.lineStyle(1,0xffffff,.035);for(let y=150;y<H;y+=44)g.lineBetween(0,y,W,y);
-  g.fillStyle(0xffa45b,.05);g.fillEllipse(W/2,H+20,410,125);
+  g.lineStyle(1,0xffffff,.025);for(let y=150;y<H;y+=44)g.lineBetween(0,y,W,y);
  }
  txt(x,y,s,size,color="#fff",weight="800",origin=.5){return this.add.text(x,y,s,{fontFamily:"system-ui",fontSize:size+"px",fontStyle:weight,color,align:"center",lineSpacing:5,wordWrap:{width:310}}).setOrigin(origin)}
  buildHud(){
