@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#101020">
 <meta name="description" content="Fruit Rush — slice fruit, chain combos and beat your high score.">
 <title>Fruit Rush — Slice Arcade</title>
@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
 <style>
 :root{font-family:Inter,ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;color-scheme:dark}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#101020}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:#101020;overscroll-behavior:none}body,button,#game{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 body{min-height:100svh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at 50% -10%,#403064 0,#19192f 38%,#090d19 100%);overflow-x:hidden}
 body:before,body:after{content:"";position:fixed;border-radius:50%;filter:blur(2px);pointer-events:none;z-index:0}
 body:before{width:260px;height:260px;top:10%;left:-140px;background:#ff7d4b12}body:after{width:300px;height:300px;right:-180px;bottom:8%;background:#a58cff12}
@@ -20,9 +20,9 @@ body:before{width:260px;height:260px;top:10%;left:-140px;background:#ff7d4b12}bo
 .tag{font-size:10px;font-weight:850;letter-spacing:1.3px;color:#d4c6ff;background:#a18aff16;border:1px solid #b8a4ff35;border-radius:999px;padding:8px 11px}
 .stage{display:flex;justify-content:center;align-items:center}
 .frame{position:relative;overflow:hidden;border-radius:30px;border:1px solid #ffffff2a;background:#15152b;box-shadow:0 30px 90px #0009,0 0 0 5px #ffffff05,0 0 55px #a18aff0b;aspect-ratio:9/16;height:min(76svh,760px);width:auto;margin:auto}
-#game{width:100%;height:100%;touch-action:none}#game canvas{display:block;width:100%!important;height:100%!important;object-fit:contain}
+#game{width:100%;height:100%;touch-action:none;overflow:hidden}#game canvas{display:block;max-width:100%;max-height:100%;touch-action:none}
 .foot{display:flex;justify-content:space-between;gap:12px;margin:12px 4px 0;color:#8987a8;font-size:10px}.foot span:last-child{text-align:right}
-@media(max-width:600px){html,body{width:100%;height:100%;min-height:100%;overflow:hidden}body{display:block;padding:0;background:#101020}.shell{width:100%;height:100svh;max-width:none}.header,.foot{display:none}.stage{width:100%;height:100%;display:block}.frame{width:100%;height:100%;max-height:none;aspect-ratio:auto;border:0;border-radius:0;box-shadow:none}#game,#game canvas{width:100%!important;height:100%!important}}
+@media(max-width:600px){html,body{width:100%;height:100%;min-height:100%;overflow:hidden}body{display:block;padding:0;background:#101020;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}.shell{width:100%;height:100svh;max-width:none}.header,.foot{display:none}.stage{width:100%;height:100%;display:block}.frame{width:100%;height:100%;max-height:none;aspect-ratio:auto;border:0;border-radius:0;box-shadow:none}#game{width:100%;height:100%}}
 @media(max-height:650px) and (orientation:landscape) and (min-width:601px){body{padding:6px}.shell{width:auto;height:100svh}.frame{height:calc(100svh - 78px);width:auto;aspect-ratio:9/16;max-height:none}.header,.foot{display:none}}
 </style>
 </head>
@@ -157,7 +157,8 @@ class Rush extends Phaser.Scene{
   this.trail.clear();if(this.swiping&&this.points&&this.points.length>1){const pts=this.points.filter(p=>time-p.t<120);this.points=pts;if(pts.length>1){this.trail.lineStyle(4,0xffd69c,.6);this.trail.beginPath();this.trail.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)this.trail.lineTo(pts[i].x,pts[i].y);this.trail.strokePath()}}
  }
 }
-new Phaser.Game({type:Phaser.AUTO,parent:"game",width:W,height:H,backgroundColor:"#17152b",scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},input:{activePointers:1},render:{antialias:true},scene:[Rush]});
+new Phaser.Game({type:Phaser.AUTO,parent:"game",width:W,height:H,backgroundColor:"#17152b",scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,expandParent:false},input:{activePointers:1},render:{antialias:true},scene:[Rush]});
+document.addEventListener("contextmenu",event=>event.preventDefault());
 })();
 </script>
 </body>
