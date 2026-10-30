@@ -1,0 +1,65 @@
+name: Build Fruit Rush Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "package.json"
+      - "capacitor.config.json"
+      - "scripts/**"
+      - ".github/workflows/android.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install app dependencies
+        run: npm install
+
+      - name: Prepare offline game assets
+        run: npm run build:android
+
+      - name: Generate Android project
+        run: npx cap add android
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Set Android target API 36
+        run: |
+          if [ -f android/variables.gradle ]; then
+            sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 36/' android/variables.gradle
+            sed -i 's/compileSdkVersion = [0-9]*/compileSdkVersion = 36/' android/variables.gradle
+          fi
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload installable debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: fruit-rush-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
