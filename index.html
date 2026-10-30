@@ -43,7 +43,7 @@ const fruits=[
  {e:"🍓",c:0xff789e,p:20},{e:"🍍",c:0xffc85c,p:20}
 ];
 class Rush extends Phaser.Scene{
- constructor(){super("rush");this.mode="home";this.score=0;this.lives=3;this.seconds=60;this.best=Number(localStorage.getItem("fruitCutterBest")||0);this.items=[];this.soundOn=true;this.combo=0;this.comboEnd=0;this.swiping=false;}
+ constructor(){super("rush");this.mode="home";this.score=0;this.lives=3;this.seconds=60;this.best=Number(localStorage.getItem("fruitCutterBest")||0);this.items=[];this.soundOn=localStorage.getItem("fruitRushSound")!=="off";this.combo=0;this.comboEnd=0;this.swiping=false;this.level=1;this.slicedCount=0;this.audio=null;}
  create(){
   this.drawBg();this.hud=this.add.container(0,0).setDepth(20);this.ui=this.add.container(0,0).setDepth(30);this.trail=this.add.graphics().setDepth(25);
   this.buildHud();
@@ -78,7 +78,7 @@ class Rush extends Phaser.Scene{
   this.hud.add(this.txt(20,20,"SCORE",10,"#aaa6ce","900",0));this.scoreTxt=this.txt(20,35,"000",30,"#ffffff","900",0);this.hud.add(this.scoreTxt);
   const card=this.add.graphics();card.fillStyle(0xffffff,.07);card.fillRoundedRect(142,25,106,48,15);card.lineStyle(1,0xffffff,.1);card.strokeRoundedRect(142,25,106,48,15);this.hud.add(card);
   this.livesTxt=this.txt(195,49,"♥ ♥ ♥",16,"#ff819e","900");this.hud.add(this.livesTxt);
-  this.timeTxt=this.txt(370,35,"60",28,"#ffe6b1","900",1);this.hud.add(this.timeTxt);this.hud.add(this.txt(370,20,"TIME",10,"#aaa6ce","900",1));
+  this.timeTxt=this.txt(370,35,"60",28,"#ffe6b1","900",1);this.hud.add(this.timeTxt);this.hud.add(this.txt(370,20,"TIME",10,"#aaa6ce","900",1));this.levelTxt=this.txt(195,94,"LEVEL 1",10,"#b9ffd8","900");this.hud.add(this.levelTxt);
   this.pauseBtn=this.makeButton(338,92,48,34,"Ⅱ",()=>this.pause(),true);this.hud.add(this.pauseBtn);
  }
  makeButton(x,y,w,h,label,fn,quiet=false){
@@ -102,7 +102,7 @@ class Rush extends Phaser.Scene{
   this.ui.add(this.makeButton(195,468,270,56,"▶   START SLICING",()=>this.start()));
   this.ui.add(this.makeButton(195,536,270,44,"HOW TO PLAY",()=>this.how(),true));
   this.ui.add(this.txt(195,594,"60 SEC   ·   3 LIVES   ·   COMBO MULTIPLIERS",9,"#a4a0c6","800"));
-  this.ui.add(this.txt(195,614,"SWIPE THROUGH FRUIT  •  AVOID BOMBS",8,"#737da4","700"));
+  this.ui.add(this.txt(195,614,"SWIPE THROUGH FRUIT  •  AVOID BOMBS",8,"#737da4","700"));this.ui.add(this.makeButton(330,104,44,34,this.soundOn?"♫":"×",()=>this.toggleSound(),true));
  }
  how(){
   this.clearUi();
@@ -115,18 +115,18 @@ class Rush extends Phaser.Scene{
   this.ui.add(this.makeButton(195,608,260,38,"BACK",()=>this.home(),true));
  }
  start(){
-  this.clearUi();this.hud.setVisible(true);this.mode="playing";this.score=0;this.lives=3;this.seconds=60;this.combo=0;this.comboEnd=0;this.swiping=false;
+  this.clearUi();this.hud.setVisible(true);this.mode="playing";this.score=0;this.lives=3;this.seconds=60;this.combo=0;this.comboEnd=0;this.swiping=false;this.level=1;this.slicedCount=0;this.updateLevel();
   this.items.forEach(o=>o.destroy());this.items=[];this.updateHud();
   if(this.timer)this.timer.remove();if(this.spawner)this.spawner.remove();
   this.timer=this.time.addEvent({delay:1000,loop:true,callback:()=>{if(this.mode!=="playing")return;this.seconds--;this.updateHud();if(this.seconds<=0)this.end("TIME'S UP") }});
-  this.spawner=this.time.addEvent({delay:850,loop:true,callback:()=>{if(this.mode==="playing")this.spawn()}});
+  this.spawner=this.time.addEvent({delay:Math.max(520,850-(this.level-1)*35),loop:true,callback:()=>{if(this.mode==="playing")this.spawn()}});
   this.spawn();
  }
- updateHud(){this.scoreTxt.setText(String(this.score).padStart(3,"0"));this.livesTxt.setText(this.lives?"♥ ".repeat(this.lives).trim():"—");this.timeTxt.setText(String(this.seconds).padStart(2,"0"));this.timeTxt.setColor(this.seconds<=10?"#ff8097":"#ffe6b1")}
+ updateHud(){this.scoreTxt.setText(String(this.score).padStart(3,"0"));this.livesTxt.setText(this.lives?"♥ ".repeat(this.lives).trim():"—");this.timeTxt.setText(String(this.seconds).padStart(2,"0"));this.timeTxt.setColor(this.seconds<=10?"#ff8097":"#ffe6b1");this.updateLevel()}
  spawn(){
-  const n=Phaser.Math.Between(3,5),center=Phaser.Math.Between(70,320);
-  for(let i=0;i<n;i++){const bomb=Math.random()<.13,f=bomb?{e:"💣",c:0x454052,p:0}:Phaser.Utils.Array.GetRandom(fruits),x=Phaser.Math.Clamp(center+Phaser.Math.Between(-95,95),32,358),y=H+40+Phaser.Math.Between(0,65);
-   const o=this.add.container(x,y).setDepth(5),glow=this.add.circle(0,0,28,f.c,.16),emoji=this.add.text(0,0,f.e,{fontFamily:"system-ui",fontSize:bomb?"43px":"45px"}).setOrigin(.5);o.add([glow,emoji]);o.setSize(55,55);o.setData({bomb,p:f.p,c:f.c,r:26,sliced:false});o.vx=Phaser.Math.Between(-100,100);o.vy=Phaser.Math.Between(-850,-690);o.spin=Phaser.Math.Between(-3,3);this.items.push(o);
+  const n=Phaser.Math.Between(3,5),center=Phaser.Math.Between(70,320),difficulty=Math.min(this.level-1,5);
+  for(let i=0;i<n;i++){const bomb=Math.random()<Math.min(.18,.11+difficulty*.012),f=bomb?{e:"💣",c:0x454052,p:0}:Phaser.Utils.Array.GetRandom(fruits),x=Phaser.Math.Clamp(center+Phaser.Math.Between(-95,95),32,358),y=H+40+Phaser.Math.Between(0,65);
+   const o=this.add.container(x,y).setDepth(5),glow=this.add.circle(0,0,28,f.c,.16),emoji=this.add.text(0,0,f.e,{fontFamily:"system-ui",fontSize:bomb?"43px":"45px"}).setOrigin(.5);o.add([glow,emoji]);o.setSize(55,55);o.setData({bomb,p:f.p,c:f.c,r:26,sliced:false});o.vx=Phaser.Math.Between(-100,100);o.vy=Phaser.Math.Between(-850-difficulty*22,-690-difficulty*18);o.spin=Phaser.Math.Between(-3,3);this.items.push(o);
   }
  }
  cut(x1,y1,x2,y2){
@@ -136,13 +136,13 @@ class Rush extends Phaser.Scene{
  }
  slice(o){
   if(!o.active||o.getData("sliced"))return;o.setData("sliced",true);
-  if(o.getData("bomb")){this.cameras.main.shake(170,.009);this.cameras.main.flash(100,255,60,100,.2);this.lives=Math.max(0,this.lives-1);this.pop(o.x,o.y,"BOMB!","#ff819e");this.updateHud();if(!this.lives)this.end("BOMBS GOT YOU");}
-  else{this.combo=this.time.now<this.comboEnd?this.combo+1:1;this.comboEnd=this.time.now+700;const mult=this.combo>=4?3:this.combo>=2?2:1,pts=o.getData("p")*mult;this.score+=pts;this.updateHud();this.pop(o.x,o.y,(mult>1?"COMBO ×"+mult+"  ":"+")+pts,mult>1?"#b8ffbe":"#ffffff");
+  if(o.getData("bomb")){this.cameras.main.shake(190,.012);this.cameras.main.flash(120,255,45,95,.24);this.tone(95,.22,"sawtooth",.07);this.vibrate(90);this.lives=Math.max(0,this.lives-1);this.pop(o.x,o.y,"BOMB!","#ff819e");this.updateHud();if(!this.lives)this.end("BOMBS GOT YOU");}
+  else{this.combo=this.time.now<this.comboEnd?this.combo+1:1;this.comboEnd=this.time.now+700;const mult=this.combo>=4?3:this.combo>=2?2:1,pts=o.getData("p")*mult;this.score+=pts;this.slicedCount++;this.tone(Math.min(880,360+this.combo*55),.075,"triangle");if(this.combo>=3)this.vibrate(18);this.updateHud();this.pop(o.x,o.y,(mult>1?"COMBO ×"+mult+"  ":"+")+pts,mult>1?"#b8ffbe":"#ffffff");
    for(let i=0;i<10;i++){const p=this.add.circle(o.x,o.y,Phaser.Math.Between(2,5),o.getData("c"),.95).setDepth(15);this.tweens.add({targets:p,x:p.x+Phaser.Math.Between(-52,52),y:p.y+Phaser.Math.Between(-55,45),alpha:0,scale:.1,duration:360,onComplete:()=>p.destroy()})}
   }
   this.tweens.add({targets:o,scale:.15,alpha:0,angle:Phaser.Math.Between(-90,90),duration:125,onComplete:()=>o.destroy()});
  }
- pop(x,y,s,color){const t=this.txt(x,y,s,16,color,"950").setDepth(18);t.setStroke("#17132b",4);this.tweens.add({targets:t,y:y-48,alpha:0,duration:650,onComplete:()=>t.destroy()})}
+ updateLevel(){const next=1+Math.floor(this.score/180);if(next!==this.level){this.level=next;if(this.levelTxt)this.levelTxt.setText("LEVEL "+this.level);if(this.mode==="playing")this.pop(195,150,"LEVEL "+this.level+"!","#b9ffd8")}else if(this.levelTxt)this.levelTxt.setText("LEVEL "+this.level)}\n tone(freq=440,duration=.08,type="sine",volume=.045){if(!this.soundOn)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;this.audio=this.audio||new C();if(this.audio.state==="suspended")this.audio.resume();const o=this.audio.createOscillator(),g=this.audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(volume,this.audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,this.audio.currentTime+duration);o.connect(g);g.connect(this.audio.destination);o.start();o.stop(this.audio.currentTime+duration)}catch(e){}}\n vibrate(ms=12){try{if(navigator.vibrate)navigator.vibrate(ms)}catch(e){}}\n toggleSound(){this.soundOn=!this.soundOn;localStorage.setItem("fruitRushSound",this.soundOn?"on":"off");this.home()}\n pop(x,y,s,color){const t=this.txt(x,y,s,16,color,"950").setDepth(18);t.setStroke("#17132b",4);this.tweens.add({targets:t,y:y-48,alpha:0,duration:650,onComplete:()=>t.destroy()})}
  pause(){
   if(this.mode==="playing"){this.mode="paused";this.swiping=false;if(this.timer)this.timer.paused=true;if(this.spawner)this.spawner.paused=true;this.clearUi();this.ui.add(this.txt(195,270,"TAKE A BREATHER",26,"#fff","950"));this.ui.add(this.txt(195,315,"Your fruit isn't going anywhere.\nProbably.",13,"#bdb7dc","500"));this.ui.add(this.makeButton(195,390,250,54,"▶  RESUME",()=>{this.mode="playing";this.clearUi();this.timer.paused=false;this.spawner.paused=false}));this.ui.add(this.makeButton(195,455,250,44,"RESTART ROUND",()=>this.start(),true));this.ui.add(this.makeButton(195,510,250,44,"QUIT TO HOME",()=>{this.timer.remove();this.spawner.remove();this.home()},true))}
  }
@@ -150,7 +150,7 @@ class Rush extends Phaser.Scene{
   if(this.mode!=="playing")return;this.mode="over";this.swiping=false;if(this.timer)this.timer.remove();if(this.spawner)this.spawner.remove();if(this.score>this.best){this.best=this.score;localStorage.setItem("fruitCutterBest",String(this.best))}
   this.hud.setVisible(false);this.clearUi();this.ui.add(this.txt(195,165,reason,12,"#ffbf87","950"));this.ui.add(this.txt(195,205,"SWEET SCORE!",30,"#fff","950"));this.ui.add(this.txt(195,275,String(this.score).padStart(3,"0"),62,"#ffcb8b","950"));
   const panel=this.add.graphics();panel.fillStyle(0xffffff,.06);panel.fillRoundedRect(45,340,300,74,17);panel.lineStyle(1,0xffffff,.1);panel.strokeRoundedRect(45,340,300,74,17);this.ui.add(panel);this.ui.add(this.txt(195,361,"PERSONAL BEST",10,"#aaa6ce","900"));this.ui.add(this.txt(195,390,String(this.best).padStart(3,"0"),24,"#c9ffbf","950"));
-  this.ui.add(this.makeButton(195,475,270,56,"↻   PLAY AGAIN",()=>this.start()));this.ui.add(this.makeButton(195,545,270,46,"BACK TO HOME",()=>this.home(),true));this.ui.add(this.txt(195,620,"ONE MORE ROUND? WE KNEW IT.",10,"#8f8bb4","800"));
+  this.ui.add(this.makeButton(195,475,270,56,"↻   PLAY AGAIN",()=>this.start()));this.ui.add(this.makeButton(195,545,270,46,"BACK TO HOME",()=>this.home(),true));this.ui.add(this.txt(195,438,"LEVEL REACHED  "+this.level+"     FRUIT SLICED  "+this.slicedCount,10,"#b9ffd8","800"));this.ui.add(this.txt(195,620,"ONE MORE ROUND? WE KNEW IT.",10,"#8f8bb4","800"));
  }
  update(time,delta){
   if(this.mode==="playing"){const dt=Math.min(delta/1000,.04);for(const o of [...this.items]){if(!o.active)continue;o.vy+=760*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;o.rotation+=o.spin*dt;if(o.y>H+90){this.items=this.items.filter(a=>a!==o);o.destroy()}}}
