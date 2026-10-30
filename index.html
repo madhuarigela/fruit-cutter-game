@@ -47,7 +47,7 @@ class Rush extends Phaser.Scene{
  create(){
   this.drawBg();this.hud=this.add.container(0,0).setDepth(20);this.ui=this.add.container(0,0).setDepth(30);this.trail=this.add.graphics().setDepth(25);
   this.buildHud();
-  this.input.on("pointerdown",p=>{if(this.mode==="playing"){this.swiping=true;this.prev={x:p.x,y:p.y};this.points=[{x:p.x,y:p.y,t:this.time.now}]}});
+  this.input.setTopOnly(true);this.input.on("pointerdown",p=>{if(this.mode==="playing"){this.swiping=true;this.prev={x:p.x,y:p.y};this.points=[{x:p.x,y:p.y,t:this.time.now}]}});
   this.input.on("pointermove",p=>{if(!this.swiping||this.mode!=="playing")return;const a=this.prev;this.prev={x:p.x,y:p.y};this.points.push({x:p.x,y:p.y,t:this.time.now});if(a)this.cut(a.x,a.y,p.x,p.y)});
   this.input.on("pointerup",()=>this.swiping=false);this.input.on("gameout",()=>this.swiping=false);
   this.home();
@@ -82,8 +82,16 @@ class Rush extends Phaser.Scene{
   this.pauseBtn=this.makeButton(338,92,48,34,"Ⅱ",()=>this.pause(),true);this.hud.add(this.pauseBtn);
  }
  makeButton(x,y,w,h,label,fn,quiet=false){
-  const c=this.add.container(x,y),g=this.add.graphics();g.fillStyle(quiet?0xffffff:0xffa65c,quiet?.09:1);g.fillRoundedRect(-w/2,-h/2,w,h,quiet?11:15);g.lineStyle(1,quiet?0xffffff:0xffd49a,quiet?.18:.8);g.strokeRoundedRect(-w/2,-h/2,w,h,quiet?11:15);
-  const t=this.txt(0,0,label,quiet?16:16,quiet?"#e8e2ff":"#321a26","900");c.add([g,t]);c.setSize(w,h);c.setInteractive(new Phaser.Geom.Rectangle(-w/2,-h/2,w,h),Phaser.Geom.Rectangle.Contains);c.on("pointerover",()=>c.setScale(1.04));c.on("pointerout",()=>c.setScale(1));c.on("pointerdown",()=>{this.tweens.add({targets:c,scale:.95,duration:65,yoyo:true});fn()});return c;
+  const c=this.add.container(x,y),g=this.add.graphics();
+  g.fillStyle(0x000000,.22);g.fillRoundedRect(-w/2,-h/2+4,w,h,quiet?13:17);
+  if(!quiet){g.fillGradientStyle(0xffd47d,0xffa34f,0xff9b54,0xff713f,1);g.fillRoundedRect(-w/2,-h/2,w,h,17);g.lineStyle(1,0xffe5b4,.9);g.strokeRoundedRect(-w/2,-h/2,w,h,17);}
+  else{g.fillStyle(0xffffff,.10);g.fillRoundedRect(-w/2,-h/2,w,h,13);g.lineStyle(1,0xffffff,.24);g.strokeRoundedRect(-w/2,-h/2,w,h,13);}
+  const t=this.txt(0,0,label,16,quiet?"#f0eaff":"#3a1b20","950");c.add([g,t]);
+  const hit=this.add.rectangle(0,0,w+28,h+28,0xffffff,0).setInteractive({useHandCursor:true});
+  hit.on("pointerover",()=>{if(!quiet)c.setScale(1.025);});
+  hit.on("pointerout",()=>c.setScale(1));
+  hit.on("pointerdown",(pointer,localX,localY,event)=>{if(event)event.stopPropagation();this.tweens.add({targets:c,scale:.97,duration:65,yoyo:true});fn();});
+  c.add(hit);c.setSize(w+28,h+28);return c;
  }
  clearUi(){this.ui.removeAll(true)}
  home(){
