@@ -1,0 +1,9 @@
+{
+  "appId": "com.madhuarigela.fruitrush",
+  "appName": "Fruit Rush",
+  "webDir": "www",
+  "backgroundColor": "#101020",
+  "server": {
+    "androidScheme": "https"
+  }
+}
